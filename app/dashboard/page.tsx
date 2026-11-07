@@ -118,15 +118,20 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (!supabase || !user) return;
+    const client = supabase;
+    const authenticatedUser = user;
+    if (!client || !authenticatedUser) return;
     let active = true;
 
-    async function loadDashboard() {
+    async function loadDashboard(
+      client: NonNullable<typeof supabase>,
+      authenticatedUser: User,
+    ) {
       setAccess("checking");
-      const { data: admin, error: adminError } = await supabase
+      const { data: admin, error: adminError } = await client
         .from("portfolio_admins")
         .select("user_id")
-        .eq("user_id", user.id)
+        .eq("user_id", authenticatedUser.id)
         .maybeSingle();
 
       if (!active) return;
@@ -141,7 +146,7 @@ export default function DashboardPage() {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from("portfolio_content")
         .select("data, updated_at")
         .eq("id", "site")
@@ -160,7 +165,7 @@ export default function DashboardPage() {
       setMessage("");
     }
 
-    void loadDashboard();
+    void loadDashboard(client, authenticatedUser);
     return () => { active = false; };
   }, [supabase, user]);
 
